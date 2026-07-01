@@ -88,6 +88,52 @@ async def test_user_can_retrieve_article_if_exists(
     assert article.article.dict(exclude={"reading_time_minutes"}) == test_article.dict()
 
 
+async def test_article_reading_time_is_calculated_from_body_word_count(
+    app: FastAPI,
+    authorized_client: AsyncClient,
+    test_user: UserInDB,
+    pool: Pool,
+) -> None:
+    short_body = "word " * 150
+    long_body = "word " * 350
+
+    async with pool.acquire() as connection:
+        articles_repo = ArticlesRepository(connection)
+        await articles_repo.create_article(
+            slug="short-article",
+            title="Short Article",
+            description="short",
+            body=short_body,
+            author=test_user,
+        )
+        await articles_repo.create_article(
+            slug="long-article",
+            title="Long Article",
+            description="long",
+            body=long_body,
+            author=test_user,
+        )
+
+    response = await authorized_client.get(app.url_path_for("articles:list-articles"))
+    articles = ListOfArticlesInResponse(**response.json())
+    articles_by_slug = {article.slug: article for article in articles.articles}
+
+    assert articles_by_slug["short-article"].reading_time_minutes == 1
+    assert articles_by_slug["long-article"].reading_time_minutes == 2
+
+    response = await authorized_client.get(
+        app.url_path_for("articles:get-article", slug="short-article")
+    )
+    short_article = ArticleInResponse(**response.json())
+    assert short_article.article.reading_time_minutes == 1
+
+    response = await authorized_client.get(
+        app.url_path_for("articles:get-article", slug="long-article")
+    )
+    long_article = ArticleInResponse(**response.json())
+    assert long_article.article.reading_time_minutes == 2
+
+
 @pytest.mark.parametrize(
     "update_field, update_value, extra_updates",
     (
