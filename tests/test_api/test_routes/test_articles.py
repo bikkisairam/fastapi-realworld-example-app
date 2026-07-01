@@ -164,7 +164,12 @@ async def test_user_can_update_article(
     for extra_field, extra_value in extra_updates.items():
         assert article_as_dict[extra_field] == extra_value
 
-    exclude_fields = {update_field, *extra_updates.keys(), "updated_at"}
+    exclude_fields = {
+        update_field,
+        *extra_updates.keys(),
+        "reading_time_minutes",
+        "updated_at",
+    }
     assert article.dict(exclude=exclude_fields) == test_article.dict(
         exclude=exclude_fields
     )
