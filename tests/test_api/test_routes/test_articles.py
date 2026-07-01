@@ -85,7 +85,7 @@ async def test_user_can_retrieve_article_if_exists(
         app.url_path_for("articles:get-article", slug=test_article.slug)
     )
     article = ArticleInResponse(**response.json())
-    assert article.article == test_article
+    assert article.article.dict(exclude={"reading_time_minutes"}) == test_article.dict()
 
 
 @pytest.mark.parametrize(
