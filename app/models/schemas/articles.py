@@ -1,6 +1,7 @@
+import math
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from app.models.domain.articles import Article
 from app.models.schemas.rwschema import RWSchema
@@ -11,6 +12,15 @@ DEFAULT_ARTICLES_OFFSET = 0
 
 class ArticleForResponse(RWSchema, Article):
     tags: List[str] = Field(..., alias="tagList")
+    reading_time_minutes: int
+
+    @validator("reading_time_minutes", pre=True, always=True)
+    def calculate_reading_time_minutes(cls, value: Optional[int], values: dict) -> int:
+        if value is not None:
+            return value
+        body = values.get("body") or ""
+        word_count = len(body.split())
+        return max(1, math.ceil(word_count / 200))
 
 
 class ArticleInResponse(RWSchema):
