@@ -1,6 +1,7 @@
+import math
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from app.models.domain.articles import Article
 from app.models.schemas.rwschema import RWSchema
